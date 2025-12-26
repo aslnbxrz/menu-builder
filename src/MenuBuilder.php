@@ -12,8 +12,11 @@ use Illuminate\Support\Facades\Route;
 class MenuBuilder
 {
     protected string $menuTable;
+
     protected string $menuItemTable;
+
     protected string $cacheKey;
+
     protected int $cacheTtl;
 
     public function __construct()
@@ -21,7 +24,7 @@ class MenuBuilder
         $this->menuTable = config('menu-builder.menu.table');
         $this->menuItemTable = config('menu-builder.menu_item.table');
         $this->cacheKey = config('menu-builder.cache.key');
-        $this->cacheTtl = (int)config('menu-builder.cache.ttl');
+        $this->cacheTtl = (int) config('menu-builder.cache.ttl');
     }
 
     /* -------------------------------------------------
@@ -38,7 +41,7 @@ class MenuBuilder
      */
     public function getTree(string $menuAlias, ?User $user = null): array
     {
-        return Cache::remember($this->cacheKey . $menuAlias, now()->addMinutes($this->cacheTtl), function () use ($menuAlias, $user) {
+        return Cache::remember($this->cacheKey.$menuAlias, now()->addMinutes($this->cacheTtl), function () use ($menuAlias, $user) {
             $flat = $this->getFlatTree($menuAlias);
 
             $tree = $this->buildTree($flat);
@@ -54,7 +57,7 @@ class MenuBuilder
     {
         $menu = $this->getMenu($menuAlias);
 
-        if (!$menu) {
+        if (! $menu) {
             return [];
         }
 
@@ -88,7 +91,7 @@ class MenuBuilder
     public static function clearCache(string $menuAlias): void
     {
         $key = config('menu-builder.cache.key', 60);
-        Cache::forget($key . $menuAlias);
+        Cache::forget($key.$menuAlias);
     }
 
     /* -------------------------------------------------
@@ -119,7 +122,7 @@ class MenuBuilder
     protected function filterVisible(array $items, ?User $user): array
     {
         return array_values(array_filter(array_map(
-            fn($item) => $this->filterItem($item, $user),
+            fn ($item) => $this->filterItem($item, $user),
             $items
         )));
     }
@@ -138,7 +141,7 @@ class MenuBuilder
     protected function isVisible(object $item, ?User $user): bool
     {
         $type = MenuItemType::from($item->type);
-        $meta = (array)($item->meta ?? []);
+        $meta = (array) ($item->meta ?? []);
 
         return match ($type) {
             MenuItemType::Url, MenuItemType::Divider => true,

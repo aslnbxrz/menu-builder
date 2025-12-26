@@ -2,9 +2,9 @@
 
 namespace Aslnbxrz\MenuBuilder\Tests;
 
+use Aslnbxrz\MenuBuilder\MenuBuilderServiceProvider;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Orchestra\Testbench\TestCase as Orchestra;
-use Aslnbxrz\MenuBuilder\MenuBuilderServiceProvider;
 
 class TestCase extends Orchestra
 {

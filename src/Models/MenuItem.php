@@ -5,11 +5,11 @@ namespace Aslnbxrz\MenuBuilder\Models;
 use Aslnbxrz\MenuBuilder\Enums\MenuItemType;
 use Aslnbxrz\MenuBuilder\Observers\MenuItemObserver;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Attributes\Scope;
-use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 #[ObservedBy(MenuItemObserver::class)]
 class MenuItem extends Model
@@ -61,6 +61,6 @@ class MenuItem extends Model
     #[Scope]
     protected function forMenu(Builder $query, string $alias): Builder
     {
-        return $query->whereHas('menu', fn($menu) => $menu->where('alias', $alias));
+        return $query->whereHas('menu', fn ($menu) => $menu->where('alias', $alias));
     }
 }

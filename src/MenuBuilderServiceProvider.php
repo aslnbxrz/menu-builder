@@ -2,9 +2,9 @@
 
 namespace Aslnbxrz\MenuBuilder;
 
+use Aslnbxrz\MenuBuilder\Commands\MenuBuilderCommand;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
-use Aslnbxrz\MenuBuilder\Commands\MenuBuilderCommand;
 
 class MenuBuilderServiceProvider extends PackageServiceProvider
 {

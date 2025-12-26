@@ -1,8 +1,8 @@
 <?php
 
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        $menuTableName     = config('menu-builder.menu.table');
+        $menuTableName = config('menu-builder.menu.table');
         $menuItemTableName = config('menu-builder.menu_item.table');
         Schema::create($menuItemTableName, function (Blueprint $table) use ($menuItemTableName, $menuTableName) {
             $table->id();
