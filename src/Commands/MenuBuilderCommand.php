@@ -1,12 +1,12 @@
 <?php
 
-namespace VendorName\Skeleton\Commands;
+namespace Aslnbxrz\MenuBuilder\Commands;
 
 use Illuminate\Console\Command;
 
-class SkeletonCommand extends Command
+class MenuBuilderCommand extends Command
 {
-    public $signature = 'skeleton';
+    public $signature = 'menu-builder';
 
     public $description = 'My command';
 
