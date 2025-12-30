@@ -54,7 +54,7 @@ return new class extends Migration
     {
         $tableName = config('menu-builder.menu_item.table');
         $driver = DB::getDriverName();
-        
+
         if ($driver === 'pgsql') {
             DB::statement(
                 <<<SQL

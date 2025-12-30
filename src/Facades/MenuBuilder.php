@@ -21,4 +21,3 @@ class MenuBuilder extends Facade
         return \Aslnbxrz\MenuBuilder\MenuBuilder::class;
     }
 }
-
