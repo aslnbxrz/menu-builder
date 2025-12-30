@@ -4,7 +4,6 @@ namespace Aslnbxrz\MenuBuilder\Observers;
 
 use Aslnbxrz\MenuBuilder\MenuBuilder;
 use Aslnbxrz\MenuBuilder\Models\Menu;
-use Aslnbxrz\MenuBuilder\Models\MenuItem;
 
 class MenuObserver
 {

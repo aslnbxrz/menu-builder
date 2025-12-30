@@ -4,9 +4,9 @@ namespace Aslnbxrz\MenuBuilder\Models;
 
 use Aslnbxrz\MenuBuilder\Observers\MenuObserver;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Attributes\Scope;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 #[ObservedBy(MenuObserver::class)]
