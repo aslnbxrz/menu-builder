@@ -59,30 +59,32 @@ class MenuBuilder
         }
 
         return DB::select("
-            WITH RECURSIVE menu_tree AS (
+        WITH RECURSIVE menu_tree AS (
             SELECT
-            mi.*,
-            0 AS depth,
-            mi.id::text AS path
-            FROM $this->menuItemTable mi
+                mi.*,
+                0 AS depth,
+                mi.id::text AS path,
+                concat_ws('/', mi.link, mi.menuable_value) AS url
+            FROM {$this->menuItemTable} mi
             WHERE mi.menu_id = ?
-            AND mi.parent_id IS NULL
-            AND mi.is_active = true
+              AND mi.parent_id IS NULL
+              AND mi.is_active = true
 
             UNION ALL
 
             SELECT
-            c.*,
-            p.depth + 1,
-            p.path || '.' || c.id
-            FROM $this->menuItemTable c
+                c.*,
+                p.depth + 1,
+                p.path || '.' || c.id,
+                concat_ws('/', c.link, c.menuable_value) AS url
+            FROM {$this->menuItemTable} c
             JOIN menu_tree p ON p.id = c.parent_id
             WHERE c.is_active = true
-            )
-            SELECT *
-            FROM menu_tree
-            ORDER BY path, sort
-            ", [$menu->id]);
+        )
+        SELECT *
+        FROM menu_tree
+        ORDER BY sort
+", [$menu->id]);
     }
 
     public static function clearCache(string $menuAlias): void

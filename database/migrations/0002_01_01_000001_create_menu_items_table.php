@@ -17,6 +17,8 @@ return new class extends Migration
             $table->id();
             $table->foreignId('menu_id')->index()->constrained($menuTableName)->restrictOnDelete();
             $table->foreignId('parent_id')->nullable()->index()->constrained($menuItemTableName, 'id')->restrictOnDelete();
+            $table->nullableMorphs('menuable');
+            $table->string('menuable_value')->nullable();
             $table->jsonb('title')->nullable();
             $table->string('link')->nullable();
             $table->string('type');

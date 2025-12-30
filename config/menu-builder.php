@@ -3,9 +3,14 @@
 declare(strict_types=1);
 
 return [
+    'menuable' => [
+        'field' => 'id',
+    ],
+
     'menu' => [
         'table' => 'menus',
     ],
+
     'menu_item' => [
         'table' => 'menu_items',
     ],
