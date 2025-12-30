@@ -14,7 +14,7 @@ class MenuItemObserver
         try {
             $item->loadMissing('menuable');
             if ($item->menuable && $item->menuable instanceof InteractsWithMenu) {
-                $item->updateQuietly(['link' => sprintf("%s/%s", $item->link ?? '', $item->menuable->getMenuableIdentifier())]);
+                $item->updateQuietly(['link' => sprintf('%s/%s', $item->link ?? '', $item->menuable->getMenuableIdentifier())]);
             }
         } catch (Throwable) {
         } finally {
@@ -38,7 +38,7 @@ class MenuItemObserver
                 } else {
                     $baseLink = implode('/', array_slice($linkParts, 0, -1));
                 }
-                $item->updateQuietly(['link' => sprintf("%s/%s", $baseLink, $item->menuable->getMenuableIdentifier())]);
+                $item->updateQuietly(['link' => sprintf('%s/%s', $baseLink, $item->menuable->getMenuableIdentifier())]);
             }
         } catch (Throwable) {
         } finally {

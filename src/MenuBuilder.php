@@ -78,9 +78,6 @@ class MenuBuilder
      * Recursively build flat tree structure
      *
      * @param  \Illuminate\Database\Eloquent\Collection<int, MenuItem>  $items
-     * @param  int|null  $parentId
-     * @param  int  $depth
-     * @param  string  $path
      * @param  array<int, object>  $result
      */
     protected function buildFlatTreeRecursive($items, ?int $parentId, int $depth, string $path, array &$result): void
