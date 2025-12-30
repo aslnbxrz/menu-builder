@@ -27,7 +27,7 @@ describe('Menu Cache', function () {
 
     test('getTree retrieves from cache', function () {
         // Manually put data in cache
-        $cacheKey = config('menu-builder.cache.key', 'menu:tree:') . 'cache-test-menu';
+        $cacheKey = config('menu-builder.cache.key', 'menu:tree:').'cache-test-menu';
         $item = (object) [
             'id' => 999,
             'title' => 'Cached Item',
@@ -47,7 +47,7 @@ describe('Menu Cache', function () {
     });
 
     test('cache key includes menu alias', function () {
-        $cacheKey = config('menu-builder.cache.key', 'menu:tree:') . 'cache-test-menu';
+        $cacheKey = config('menu-builder.cache.key', 'menu:tree:').'cache-test-menu';
 
         MenuBuilder::getTree('cache-test-menu');
 
@@ -58,7 +58,7 @@ describe('Menu Cache', function () {
         // Cache the menu
         MenuBuilder::getTree('cache-test-menu');
 
-        $cacheKey = config('menu-builder.cache.key', 'menu:tree:') . 'cache-test-menu';
+        $cacheKey = config('menu-builder.cache.key', 'menu:tree:').'cache-test-menu';
 
         expect(Cache::has($cacheKey))->toBeTrue();
 
@@ -87,8 +87,8 @@ describe('Menu Cache', function () {
         MenuBuilder::getTree('cache-test-menu');
         MenuBuilder::getTree('second-menu');
 
-        $cacheKey1 = config('menu-builder.cache.key', 'menu:tree:') . 'cache-test-menu';
-        $cacheKey2 = config('menu-builder.cache.key', 'menu:tree:') . 'second-menu';
+        $cacheKey1 = config('menu-builder.cache.key', 'menu:tree:').'cache-test-menu';
+        $cacheKey2 = config('menu-builder.cache.key', 'menu:tree:').'second-menu';
 
         expect(Cache::has($cacheKey1))->toBeTrue()
             ->and(Cache::has($cacheKey2))->toBeTrue();
@@ -116,7 +116,7 @@ describe('Observer Cache Invalidation', function () {
         // Cache the menu
         MenuBuilder::getTree('observer-test-menu');
 
-        $cacheKey = config('menu-builder.cache.key', 'menu:tree:') . 'observer-test-menu';
+        $cacheKey = config('menu-builder.cache.key', 'menu:tree:').'observer-test-menu';
         expect(Cache::has($cacheKey))->toBeTrue();
 
         // Create new item - should trigger observer
@@ -144,7 +144,7 @@ describe('Observer Cache Invalidation', function () {
         // Cache the menu
         MenuBuilder::getTree('observer-test-menu');
 
-        $cacheKey = config('menu-builder.cache.key', 'menu:tree:') . 'observer-test-menu';
+        $cacheKey = config('menu-builder.cache.key', 'menu:tree:').'observer-test-menu';
         expect(Cache::has($cacheKey))->toBeTrue();
 
         // Update item
@@ -166,7 +166,7 @@ describe('Observer Cache Invalidation', function () {
         // Cache the menu
         MenuBuilder::getTree('observer-test-menu');
 
-        $cacheKey = config('menu-builder.cache.key', 'menu:tree:') . 'observer-test-menu';
+        $cacheKey = config('menu-builder.cache.key', 'menu:tree:').'observer-test-menu';
         expect(Cache::has($cacheKey))->toBeTrue();
 
         // Delete item
@@ -180,7 +180,7 @@ describe('Observer Cache Invalidation', function () {
         // Cache the menu
         MenuBuilder::getTree('observer-test-menu');
 
-        $cacheKey = config('menu-builder.cache.key', 'menu:tree:') . 'observer-test-menu';
+        $cacheKey = config('menu-builder.cache.key', 'menu:tree:').'observer-test-menu';
         expect(Cache::has($cacheKey))->toBeTrue();
 
         // Update menu
@@ -194,7 +194,7 @@ describe('Observer Cache Invalidation', function () {
         // Cache the menu
         MenuBuilder::getTree('observer-test-menu');
 
-        $cacheKey = config('menu-builder.cache.key', 'menu:tree:') . 'observer-test-menu';
+        $cacheKey = config('menu-builder.cache.key', 'menu:tree:').'observer-test-menu';
         expect(Cache::has($cacheKey))->toBeTrue();
 
         // Delete menu

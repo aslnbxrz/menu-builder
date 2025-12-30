@@ -42,7 +42,7 @@ class MenuBuilder
     public function getTree(string $menuAlias, ?User $user = null): array
     {
         // Cache the full tree structure, not the filtered result
-        $tree = Cache::remember($this->cacheKey . $menuAlias, now()->addMinutes($this->cacheTtl), function () use ($menuAlias) {
+        $tree = Cache::remember($this->cacheKey.$menuAlias, now()->addMinutes($this->cacheTtl), function () use ($menuAlias) {
             $flat = $this->getFlatTree($menuAlias);
 
             return $this->buildTree($flat);
@@ -62,7 +62,7 @@ class MenuBuilder
     {
         $menu = $this->getMenu($menuAlias);
 
-        if (!$menu) {
+        if (! $menu) {
             return [];
         }
 
@@ -89,7 +89,7 @@ class MenuBuilder
     {
         foreach ($items as $item) {
             if ($item->parent_id === $parentId) {
-                $currentPath = $path ? $path . '.' . $item->id : (string) $item->id;
+                $currentPath = $path ? $path.'.'.$item->id : (string) $item->id;
                 $url = trim(implode('/', array_filter([$item->link, $item->menuable_value])), '/');
 
                 $itemData = (object) [
@@ -121,7 +121,7 @@ class MenuBuilder
     public static function clearCache(string $menuAlias): void
     {
         $key = config('menu-builder.cache.key', 'menu:tree:');
-        Cache::forget($key . $menuAlias);
+        Cache::forget($key.$menuAlias);
     }
 
     /**
@@ -147,7 +147,7 @@ class MenuBuilder
         // Find current item by URL
         $currentItem = $this->findItemByUrl($flatTree, $currentUrl);
 
-        if (!$currentItem) {
+        if (! $currentItem) {
             return $includeHome ? [$this->formatBreadcrumbItem($flatTree[0])] : [];
         }
 
@@ -163,7 +163,7 @@ class MenuBuilder
         }
 
         // Sort by depth to ensure proper order
-        usort($breadcrumbs, fn($a, $b) => $a['depth'] <=> $b['depth']);
+        usort($breadcrumbs, fn ($a, $b) => $a['depth'] <=> $b['depth']);
 
         return array_values($breadcrumbs);
     }
@@ -180,7 +180,7 @@ class MenuBuilder
     {
         $routeName = $routeName ?? request()->route()?->getName();
 
-        if (!$routeName) {
+        if (! $routeName) {
             return [];
         }
 
@@ -202,7 +202,7 @@ class MenuBuilder
             }
         }
 
-        if (!$currentItem) {
+        if (! $currentItem) {
             return $includeHome ? [$this->formatBreadcrumbItem($flatTree[0])] : [];
         }
 
@@ -218,7 +218,7 @@ class MenuBuilder
         }
 
         // Sort by depth
-        usort($breadcrumbs, fn($a, $b) => $a['depth'] <=> $b['depth']);
+        usort($breadcrumbs, fn ($a, $b) => $a['depth'] <=> $b['depth']);
 
         return array_values($breadcrumbs);
     }
@@ -307,7 +307,7 @@ class MenuBuilder
     protected function filterVisible(array $items, ?User $user): array
     {
         return array_values(array_filter(array_map(
-            fn($item) => $this->filterItem($item, $user),
+            fn ($item) => $this->filterItem($item, $user),
             $items
         )));
     }
@@ -325,7 +325,7 @@ class MenuBuilder
 
     protected function isVisible(object $item, ?User $user): bool
     {
-        if (!isset($item->type) || empty($item->type)) {
+        if (! isset($item->type) || empty($item->type)) {
             return false;
         }
 

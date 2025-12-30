@@ -1,8 +1,8 @@
 <?php
 
+use Aslnbxrz\MenuBuilder\Enums\MenuItemType;
 use Aslnbxrz\MenuBuilder\Models\Menu;
 use Aslnbxrz\MenuBuilder\Models\MenuItem;
-use Aslnbxrz\MenuBuilder\Enums\MenuItemType;
 
 describe('Menu Model', function () {
     test('can create menu', function () {
@@ -154,7 +154,7 @@ describe('Menu Scopes', function () {
 
 describe('Menu Validation', function () {
     test('alias is required', function () {
-        expect(fn() => Menu::create([
+        expect(fn () => Menu::create([
             'title' => 'Test Menu',
             'is_active' => true,
         ]))->toThrow(Exception::class);

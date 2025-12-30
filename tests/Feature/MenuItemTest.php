@@ -106,7 +106,7 @@ describe('MenuItem Types', function () {
     });
 
     test('can create Route type item', function () {
-        Route::get('/test-route', fn() => 'test')->name('test.route');
+        Route::get('/test-route', fn () => 'test')->name('test.route');
 
         $item = MenuItem::create([
             'menu_id' => $this->menu->id,
@@ -301,7 +301,7 @@ describe('MenuItem Scopes', function () {
         $activeItems = MenuItem::active()->get();
 
         expect($activeItems)->toHaveCount(2)
-            ->and($activeItems->every(fn($item) => $item->is_active))->toBeTrue();
+            ->and($activeItems->every(fn ($item) => $item->is_active))->toBeTrue();
     });
 
     test('ordered scope sorts by sort field', function () {
@@ -329,7 +329,7 @@ describe('MenuItem Scopes', function () {
         $items = MenuItem::forMenu('test-menu')->get();
 
         expect($items)->toHaveCount(3) // 2 root + 1 child
-            ->and($items->every(fn($item) => $item->menu_id === $this->menu->id))->toBeTrue();
+            ->and($items->every(fn ($item) => $item->menu_id === $this->menu->id))->toBeTrue();
     });
 
     test('can chain multiple scopes', function () {

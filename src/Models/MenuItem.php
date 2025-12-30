@@ -91,6 +91,6 @@ class MenuItem extends Model
     #[Scope]
     protected function forMenu(Builder $query, string $alias): Builder
     {
-        return $query->whereHas('menu', fn($menu) => $menu->where('alias', $alias));
+        return $query->whereHas('menu', fn ($menu) => $menu->where('alias', $alias));
     }
 }

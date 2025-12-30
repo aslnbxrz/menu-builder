@@ -13,7 +13,7 @@ class TestCase extends Orchestra
         parent::setUp();
 
         Factory::guessFactoryNamesUsing(
-            fn(string $modelName) => 'Aslnbxrz\\MenuBuilder\\Database\\Factories\\' . class_basename($modelName) . 'Factory'
+            fn (string $modelName) => 'Aslnbxrz\\MenuBuilder\\Database\\Factories\\'.class_basename($modelName).'Factory'
         );
     }
 
@@ -34,7 +34,7 @@ class TestCase extends Orchestra
         ]);
 
         // Load package migrations
-        $migrationPath = __DIR__ . '/../database/migrations';
+        $migrationPath = __DIR__.'/../database/migrations';
         if (is_dir($migrationPath)) {
             foreach (\Illuminate\Support\Facades\File::allFiles($migrationPath) as $migration) {
                 (include $migration->getRealPath())->up();

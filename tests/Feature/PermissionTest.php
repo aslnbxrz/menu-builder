@@ -75,7 +75,7 @@ describe('Permission-Based Filtering', function () {
     });
 
     test('user with admin permission sees admin items', function () {
-        $user = new TestUser();
+        $user = new TestUser;
         $user->setPermissions(['access-admin']);
 
         $tree = MenuBuilder::getTree('permission-menu', $user);
@@ -89,7 +89,7 @@ describe('Permission-Based Filtering', function () {
     });
 
     test('user with multiple permissions sees all accessible items', function () {
-        $user = new TestUser();
+        $user = new TestUser;
         $user->setPermissions(['access-admin', 'access-editor']);
 
         $tree = MenuBuilder::getTree('permission-menu', $user);
@@ -98,7 +98,7 @@ describe('Permission-Based Filtering', function () {
     });
 
     test('user without permissions sees only public items', function () {
-        $user = new TestUser();
+        $user = new TestUser;
         $user->setPermissions([]);
 
         $tree = MenuBuilder::getTree('permission-menu', $user);
@@ -148,7 +148,7 @@ describe('Nested Permission Filtering', function () {
     });
 
     test('parent visible if has accessible children', function () {
-        $user = new TestUser();
+        $user = new TestUser;
         $user->setPermissions([]);
 
         $tree = MenuBuilder::getTree('nested-permission-menu', $user);
@@ -161,7 +161,7 @@ describe('Nested Permission Filtering', function () {
     });
 
     test('user with permission sees both children', function () {
-        $user = new TestUser();
+        $user = new TestUser;
         $user->setPermissions(['access-admin']);
 
         $tree = MenuBuilder::getTree('nested-permission-menu', $user);
@@ -173,7 +173,7 @@ describe('Nested Permission Filtering', function () {
 describe('Route-Based Filtering', function () {
     test('route items visible only if route exists', function () {
         // Register a route
-        Route::get('/test-route', fn() => 'test')->name('test.route');
+        Route::get('/test-route', fn () => 'test')->name('test.route');
 
         $menu = Menu::create([
             'alias' => 'route-menu',
@@ -291,7 +291,7 @@ describe('Complex Permission Scenarios', function () {
         expect($guestTree[0]->children)->toHaveCount(0);
 
         // Admin user
-        $adminUser = new TestUser();
+        $adminUser = new TestUser;
         $adminUser->setPermissions(['access-admin']);
         $adminTree = MenuBuilder::getTree('deep-permission-menu', $adminUser);
         expect($adminTree[0]->children)->toHaveCount(1)
