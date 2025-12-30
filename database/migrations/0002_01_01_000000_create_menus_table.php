@@ -13,8 +13,8 @@ return new class extends Migration
     {
         Schema::create(config('menu-builder.menu.table'), function (Blueprint $table) {
             $table->id();
-            $table->jsonb('title')->nullable();
-            $table->jsonb('description')->nullable();
+            $table->string('title')->nullable();
+            $table->text('description')->nullable();
             $table->string('alias')->unique();
             $table->boolean('is_active')->default(true);
             $table->timestamps();

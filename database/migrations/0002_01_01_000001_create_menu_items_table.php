@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -19,22 +20,31 @@ return new class extends Migration
             $table->foreignId('parent_id')->nullable()->index()->constrained($menuItemTableName, 'id')->restrictOnDelete();
             $table->nullableMorphs('menuable');
             $table->string('menuable_value')->nullable();
-            $table->jsonb('title')->nullable();
+            $table->string('title')->nullable();
             $table->string('link')->nullable();
             $table->string('type');
             $table->boolean('is_active')->default(true);
             $table->unsignedInteger('sort')->default(0);
-            $table->jsonb('meta')->nullable();
+            $table->json('meta')->nullable();
             $table->timestamps();
         });
 
-        DB::statement(
-            <<<SQL
-                CREATE INDEX {$menuItemTableName}_visible_sorted_idx
-                ON $menuItemTableName (menu_id, parent_id, sort)
-                WHERE is_active = true
-                SQL
-        );
+        // Create partial index for PostgreSQL, regular index for other databases
+        $driver = DB::getDriverName();
+        if ($driver === 'pgsql') {
+            DB::statement(
+                <<<SQL
+                    CREATE INDEX {$menuItemTableName}_visible_sorted_idx
+                    ON $menuItemTableName (menu_id, parent_id, sort)
+                    WHERE is_active = true
+                    SQL
+            );
+        } else {
+            // For MySQL and other databases, create a regular composite index
+            Schema::table($menuItemTableName, function (Blueprint $table) {
+                $table->index(['menu_id', 'parent_id', 'sort', 'is_active'], 'menu_items_visible_sorted_idx');
+            });
+        }
     }
 
     /**
@@ -43,11 +53,19 @@ return new class extends Migration
     public function down(): void
     {
         $tableName = config('menu-builder.menu_item.table');
-        DB::statement(
-            <<<SQL
-                DROP INDEX IF EXISTS {$tableName}_visible_sorted_idx
-                SQL
-        );
+        $driver = DB::getDriverName();
+        
+        if ($driver === 'pgsql') {
+            DB::statement(
+                <<<SQL
+                    DROP INDEX IF EXISTS {$tableName}_visible_sorted_idx
+                    SQL
+            );
+        } else {
+            Schema::table($tableName, function (Blueprint $table) {
+                $table->dropIndex('menu_items_visible_sorted_idx');
+            });
+        }
 
         Schema::dropIfExists($tableName);
     }

@@ -4,9 +4,9 @@ namespace Aslnbxrz\MenuBuilder;
 
 use Aslnbxrz\MenuBuilder\Enums\MenuItemType;
 use Aslnbxrz\MenuBuilder\Models\Menu;
+use Aslnbxrz\MenuBuilder\Models\MenuItem;
 use Illuminate\Foundation\Auth\User;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 
 class MenuBuilder
@@ -21,10 +21,10 @@ class MenuBuilder
 
     public function __construct()
     {
-        $this->menuTable = config('menu-builder.menu.table');
-        $this->menuItemTable = config('menu-builder.menu_item.table');
-        $this->cacheKey = config('menu-builder.cache.key');
-        $this->cacheTtl = (int) config('menu-builder.cache.ttl');
+        $this->menuTable = config('menu-builder.menu.table', 'menus');
+        $this->menuItemTable = config('menu-builder.menu_item.table', 'menu_items');
+        $this->cacheKey = config('menu-builder.cache.key', 'menu:tree:');
+        $this->cacheTtl = (int) config('menu-builder.cache.ttl', 360);
     }
 
     /* -------------------------------------------------
@@ -61,38 +61,64 @@ class MenuBuilder
             return [];
         }
 
-        return DB::select("
-        WITH RECURSIVE menu_tree AS (
-            SELECT
-                mi.*,
-                0 AS depth,
-                mi.id::text AS path,
-                concat_ws('/', mi.link, mi.menuable_value) AS url
-            FROM {$this->menuItemTable} mi
-            WHERE mi.menu_id = ?
-              AND mi.parent_id IS NULL
-              AND mi.is_active = true
+        // Use Eloquent for database-agnostic approach
+        $items = MenuItem::query()
+            ->where('menu_id', $menu->id)
+            ->where('is_active', true)
+            ->orderBy('sort')
+            ->get();
 
-            UNION ALL
+        $result = [];
+        $this->buildFlatTreeRecursive($items, null, 0, '', $result);
 
-            SELECT
-                c.*,
-                p.depth + 1,
-                p.path || '.' || c.id,
-                concat_ws('/', c.link, c.menuable_value) AS url
-            FROM {$this->menuItemTable} c
-            JOIN menu_tree p ON p.id = c.parent_id
-            WHERE c.is_active = true
-        )
-        SELECT *
-        FROM menu_tree
-        ORDER BY sort
-", [$menu->id]);
+        return $result;
+    }
+
+    /**
+     * Recursively build flat tree structure
+     *
+     * @param  \Illuminate\Database\Eloquent\Collection<int, MenuItem>  $items
+     * @param  int|null  $parentId
+     * @param  int  $depth
+     * @param  string  $path
+     * @param  array<int, object>  $result
+     */
+    protected function buildFlatTreeRecursive($items, ?int $parentId, int $depth, string $path, array &$result): void
+    {
+        foreach ($items as $item) {
+            if ($item->parent_id === $parentId) {
+                $currentPath = $path ? $path.'.'.$item->id : (string) $item->id;
+                $url = trim(implode('/', array_filter([$item->link, $item->menuable_value])), '/');
+
+                $itemData = (object) [
+                    'id' => $item->id,
+                    'menu_id' => $item->menu_id,
+                    'parent_id' => $item->parent_id,
+                    'menuable_type' => $item->menuable_type,
+                    'menuable_id' => $item->menuable_id,
+                    'menuable_value' => $item->menuable_value,
+                    'title' => $item->title,
+                    'link' => $item->link,
+                    'type' => $item->type->value,
+                    'is_active' => $item->is_active,
+                    'sort' => $item->sort,
+                    'meta' => $item->meta,
+                    'created_at' => $item->created_at,
+                    'updated_at' => $item->updated_at,
+                    'depth' => $depth,
+                    'path' => $currentPath,
+                    'url' => $url,
+                ];
+
+                $result[] = $itemData;
+                $this->buildFlatTreeRecursive($items, $item->id, $depth + 1, $currentPath, $result);
+            }
+        }
     }
 
     public static function clearCache(string $menuAlias): void
     {
-        $key = config('menu-builder.cache.key', 60);
+        $key = config('menu-builder.cache.key', 'menu:tree:');
         Cache::forget($key.$menuAlias);
     }
 
@@ -111,7 +137,7 @@ class MenuBuilder
         }
 
         foreach ($items as $item) {
-            if ($item->parent_id) {
+            if ($item->parent_id && isset($map[$item->parent_id])) {
                 $map[$item->parent_id]->children[] = $item;
             } else {
                 $tree[] = $item;
@@ -142,7 +168,16 @@ class MenuBuilder
 
     protected function isVisible(object $item, ?User $user): bool
     {
-        $type = MenuItemType::from($item->type);
+        if (! isset($item->type) || empty($item->type)) {
+            return false;
+        }
+
+        try {
+            $type = MenuItemType::from($item->type);
+        } catch (\ValueError $e) {
+            return false;
+        }
+
         $meta = (array) ($item->meta ?? []);
 
         return match ($type) {

@@ -9,21 +9,21 @@ class MenuObserver
 {
     public function created(Menu $menu): void
     {
-        MenuBuilder::clearCache($menu->alias);
+        MenuBuilder::clearCache($menu->getAttribute('alias') ?? '');
     }
 
     public function updated(Menu $menu): void
     {
-        MenuBuilder::clearCache($menu->alias);
+        MenuBuilder::clearCache($menu->getAttribute('alias') ?? '');
     }
 
     public function deleted(Menu $menu): void
     {
-        MenuBuilder::clearCache($menu->alias);
+        MenuBuilder::clearCache($menu->getAttribute('alias') ?? '');
     }
 
     public function restored(Menu $menu): void
     {
-        MenuBuilder::clearCache($menu->alias);
+        MenuBuilder::clearCache($menu->getAttribute('alias') ?? '');
     }
 }

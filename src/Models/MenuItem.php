@@ -12,6 +12,22 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 
+/**
+ * @property int $id
+ * @property int $menu_id
+ * @property int|null $parent_id
+ * @property string|null $menuable_type
+ * @property int|null $menuable_id
+ * @property string|null $menuable_value
+ * @property string|null $title
+ * @property string|null $link
+ * @property MenuItemType $type
+ * @property bool $is_active
+ * @property int $sort
+ * @property array|null $meta
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ */
 #[ObservedBy(MenuItemObserver::class)]
 class MenuItem extends Model
 {
