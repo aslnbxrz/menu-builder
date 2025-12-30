@@ -33,7 +33,14 @@ class MenuItem extends Model
 {
     protected $guarded = [];
 
+    protected $attributes = [
+        'is_active' => true,
+        'sort' => 0,
+    ];
+
     protected $casts = [
+        'is_active' => 'boolean',
+        'sort' => 'integer',
         'type' => MenuItemType::class,
         'meta' => 'array',
     ];
@@ -84,6 +91,6 @@ class MenuItem extends Model
     #[Scope]
     protected function forMenu(Builder $query, string $alias): Builder
     {
-        return $query->whereHas('menu', fn ($menu) => $menu->where('alias', $alias));
+        return $query->whereHas('menu', fn($menu) => $menu->where('alias', $alias));
     }
 }

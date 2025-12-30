@@ -560,6 +560,409 @@ $orderedItems = MenuItem::ordered()->get();
 $items = MenuItem::forMenu('main-menu')->get();
 ```
 
+## Breadcrumbs
+
+The package provides built-in breadcrumb functionality that automatically generates breadcrumb trails based on your menu structure.
+
+### Basic Usage
+
+#### Get Breadcrumbs by URL
+
+```php
+use Aslnbxrz\MenuBuilder\Facades\MenuBuilder;
+
+// Get breadcrumbs for current URL
+$breadcrumbs = MenuBuilder::getBreadcrumbs('main-menu');
+
+// Get breadcrumbs for specific URL
+$breadcrumbs = MenuBuilder::getBreadcrumbs('main-menu', '/products/laptops/macbook');
+
+// Include home item even if URL not found
+$breadcrumbs = MenuBuilder::getBreadcrumbs('main-menu', '/not-found', includeHome: true);
+```
+
+#### Get Breadcrumbs by Route Name
+
+```php
+// Get breadcrumbs for current route
+$breadcrumbs = MenuBuilder::getBreadcrumbsByRoute('main-menu');
+
+// Get breadcrumbs for specific route
+$breadcrumbs = MenuBuilder::getBreadcrumbsByRoute('main-menu', 'products.show');
+
+// Include home item even if route not found
+$breadcrumbs = MenuBuilder::getBreadcrumbsByRoute('main-menu', 'products.show', includeHome: true);
+```
+
+### Breadcrumb Structure
+
+Each breadcrumb item contains:
+
+```php
+[
+    'id' => 1,
+    'title' => 'Products',
+    'url' => '/products',
+    'link' => '/products',
+    'type' => 'url',
+    'depth' => 1,
+    'meta' => null,
+]
+```
+
+### Example: Menu Structure
+
+Given this menu structure:
+```
+Home (/) 
+  └─ Products (/products)
+      └─ Laptops (/products/laptops)
+          └─ MacBook (/products/laptops/macbook)
+```
+
+When visiting `/products/laptops/macbook`, the breadcrumbs will be:
+
+```php
+$breadcrumbs = MenuBuilder::getBreadcrumbs('main-menu', '/products/laptops/macbook');
+
+// Returns:
+[
+    ['id' => 1, 'title' => 'Home', 'url' => '/', 'depth' => 0],
+    ['id' => 2, 'title' => 'Products', 'url' => '/products', 'depth' => 1],
+    ['id' => 3, 'title' => 'Laptops', 'url' => '/products/laptops', 'depth' => 2],
+    ['id' => 4, 'title' => 'MacBook', 'url' => '/products/laptops/macbook', 'depth' => 3],
+]
+```
+
+### Blade Template Example
+
+**Controller:**
+```php
+use Aslnbxrz\MenuBuilder\Facades\MenuBuilder;
+
+class ProductController extends Controller
+{
+    public function show($slug)
+    {
+        $breadcrumbs = MenuBuilder::getBreadcrumbs('main-menu');
+        
+        return view('products.show', compact('breadcrumbs'));
+    }
+}
+```
+
+**Blade View:**
+```blade
+@if(count($breadcrumbs) > 0)
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            @foreach($breadcrumbs as $index => $crumb)
+                @if($index === count($breadcrumbs) - 1)
+                    <li class="breadcrumb-item active" aria-current="page">
+                        {{ $crumb['title'] }}
+                    </li>
+                @else
+                    <li class="breadcrumb-item">
+                        <a href="{{ $crumb['url'] }}">{{ $crumb['title'] }}</a>
+                    </li>
+                @endif
+            @endforeach
+        </ol>
+    </nav>
+@endif
+```
+
+### API Integration
+
+**API Controller:**
+```php
+use Aslnbxrz\MenuBuilder\Facades\MenuBuilder;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+
+class BreadcrumbController extends Controller
+{
+    public function show(Request $request, string $alias): JsonResponse
+    {
+        $url = $request->query('url', $request->url());
+        $breadcrumbs = MenuBuilder::getBreadcrumbs($alias, $url);
+        
+        return response()->json([
+            'success' => true,
+            'data' => $breadcrumbs,
+        ]);
+    }
+    
+    public function byRoute(Request $request, string $alias): JsonResponse
+    {
+        $routeName = $request->query('route');
+        $breadcrumbs = MenuBuilder::getBreadcrumbsByRoute($alias, $routeName);
+        
+        return response()->json([
+            'success' => true,
+            'data' => $breadcrumbs,
+        ]);
+    }
+}
+```
+
+**Route:**
+```php
+Route::get('/api/menus/{alias}/breadcrumbs', [BreadcrumbController::class, 'show']);
+Route::get('/api/menus/{alias}/breadcrumbs/route', [BreadcrumbController::class, 'byRoute']);
+```
+
+### Frontend Examples
+
+#### React Example
+
+```jsx
+import { useEffect, useState } from 'react';
+import axios from 'axios';
+
+function Breadcrumbs({ menuAlias }) {
+    const [breadcrumbs, setBreadcrumbs] = useState([]);
+
+    useEffect(() => {
+        const fetchBreadcrumbs = async () => {
+            try {
+                const currentUrl = window.location.pathname;
+                const response = await axios.get(
+                    `/api/menus/${menuAlias}/breadcrumbs?url=${currentUrl}`
+                );
+                
+                if (response.data.success) {
+                    setBreadcrumbs(response.data.data);
+                }
+            } catch (error) {
+                console.error('Error fetching breadcrumbs:', error);
+            }
+        };
+
+        fetchBreadcrumbs();
+    }, [menuAlias, window.location.pathname]);
+
+    if (breadcrumbs.length === 0) return null;
+
+    return (
+        <nav aria-label="breadcrumb">
+            <ol className="breadcrumb">
+                {breadcrumbs.map((crumb, index) => (
+                    <li 
+                        key={crumb.id}
+                        className={`breadcrumb-item ${
+                            index === breadcrumbs.length - 1 ? 'active' : ''
+                        }`}
+                        aria-current={
+                            index === breadcrumbs.length - 1 ? 'page' : undefined
+                        }
+                    >
+                        {index === breadcrumbs.length - 1 ? (
+                            crumb.title
+                        ) : (
+                            <a href={crumb.url}>{crumb.title}</a>
+                        )}
+                    </li>
+                ))}
+            </ol>
+        </nav>
+    );
+}
+
+export default Breadcrumbs;
+```
+
+#### Vue.js Example
+
+```vue
+<template>
+    <nav v-if="breadcrumbs.length > 0" aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li
+                v-for="(crumb, index) in breadcrumbs"
+                :key="crumb.id"
+                :class="['breadcrumb-item', { active: isLast(index) }]"
+                :aria-current="isLast(index) ? 'page' : undefined"
+            >
+                <a v-if="!isLast(index)" :href="crumb.url">
+                    {{ crumb.title }}
+                </a>
+                <span v-else>{{ crumb.title }}</span>
+            </li>
+        </ol>
+    </nav>
+</template>
+
+<script>
+import axios from 'axios';
+
+export default {
+    props: {
+        menuAlias: {
+            type: String,
+            required: true,
+        },
+    },
+    data() {
+        return {
+            breadcrumbs: [],
+        };
+    },
+    async mounted() {
+        try {
+            const currentUrl = window.location.pathname;
+            const response = await axios.get(
+                `/api/menus/${this.menuAlias}/breadcrumbs?url=${currentUrl}`
+            );
+            
+            if (response.data.success) {
+                this.breadcrumbs = response.data.data;
+            }
+        } catch (error) {
+            console.error('Error fetching breadcrumbs:', error);
+        }
+    },
+    methods: {
+        isLast(index) {
+            return index === this.breadcrumbs.length - 1;
+        },
+    },
+};
+</script>
+```
+
+### Advanced Usage
+
+#### Route-based Breadcrumbs with Laravel
+
+```php
+// In your route definition
+Route::get('/products/{slug}', [ProductController::class, 'show'])
+    ->name('products.show');
+
+// In your controller
+public function show($slug)
+{
+    // Get breadcrumbs by route name
+    $breadcrumbs = MenuBuilder::getBreadcrumbsByRoute('main-menu', 'products.show');
+    
+    return view('products.show', compact('breadcrumbs'));
+}
+```
+
+#### Custom Breadcrumb Component (Blade)
+
+**`resources/views/components/breadcrumbs.blade.php`:**
+```blade
+@props(['menuAlias', 'includeHome' => false])
+
+@php
+    $breadcrumbs = \Aslnbxrz\MenuBuilder\Facades\MenuBuilder::getBreadcrumbs(
+        $menuAlias, 
+        null, 
+        $includeHome
+    );
+@endphp
+
+@if(count($breadcrumbs) > 0)
+    <nav {{ $attributes->merge(['class' => 'breadcrumb-nav']) }} aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            @foreach($breadcrumbs as $index => $crumb)
+                <li class="breadcrumb-item {{ $index === count($breadcrumbs) - 1 ? 'active' : '' }}">
+                    @if($index === count($breadcrumbs) - 1)
+                        {{ $crumb['title'] }}
+                    @else
+                        <a href="{{ $crumb['url'] }}">{{ $crumb['title'] }}</a>
+                    @endif
+                    
+                    @if($index < count($breadcrumbs) - 1)
+                        <span class="separator">/</span>
+                    @endif
+                </li>
+            @endforeach
+        </ol>
+    </nav>
+@endif
+```
+
+**Usage:**
+```blade
+<x-breadcrumbs menu-alias="main-menu" include-home />
+```
+
+### SEO-Friendly Structured Data
+
+Generate JSON-LD structured data for search engines:
+
+```php
+use Aslnbxrz\MenuBuilder\Facades\MenuBuilder;
+
+class BreadcrumbHelper
+{
+    public static function getStructuredData(string $menuAlias): string
+    {
+        $breadcrumbs = MenuBuilder::getBreadcrumbs($menuAlias);
+        
+        if (empty($breadcrumbs)) {
+            return '';
+        }
+        
+        $items = [];
+        foreach ($breadcrumbs as $index => $crumb) {
+            $items[] = [
+                '@type' => 'ListItem',
+                'position' => $index + 1,
+                'name' => $crumb['title'],
+                'item' => url($crumb['url']),
+            ];
+        }
+        
+        $structuredData = [
+            '@context' => 'https://schema.org',
+            '@type' => 'BreadcrumbList',
+            'itemListElement' => $items,
+        ];
+        
+        return json_encode($structuredData, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
+    }
+}
+```
+
+**Usage in Blade:**
+```blade
+<script type="application/ld+json">
+{!! \App\Helpers\BreadcrumbHelper::getStructuredData('main-menu') !!}
+</script>
+```
+
+### Best Practices
+
+1. **Always include home breadcrumb for better UX:**
+   ```php
+   $breadcrumbs = MenuBuilder::getBreadcrumbs('main-menu', null, includeHome: true);
+   ```
+
+2. **Use route-based breadcrumbs for dynamic routes:**
+   ```php
+   $breadcrumbs = MenuBuilder::getBreadcrumbsByRoute('main-menu', 'products.show');
+   ```
+
+3. **Cache breadcrumbs for better performance:**
+   ```php
+   $breadcrumbs = Cache::remember(
+       "breadcrumbs:{$menuAlias}:{$url}", 
+       3600, 
+       fn() => MenuBuilder::getBreadcrumbs($menuAlias, $url)
+   );
+   ```
+
+4. **Add ARIA labels for accessibility:**
+   ```html
+   <nav aria-label="breadcrumb">
+       <ol class="breadcrumb">...</ol>
+   </nav>
+   ```
+
 ## API Integration
 
 Since this package is primarily designed for frontend API integration, here are complete examples for creating API endpoints and consuming them in various frontend frameworks.
@@ -1041,6 +1444,42 @@ Get a flat array of all menu items with depth information.
 
 ```php
 $flatTree = MenuBuilder::getFlatTree('main-menu');
+```
+
+#### `getBreadcrumbs(string $menuAlias, ?string $currentUrl = null, bool $includeHome = false): array`
+Get breadcrumb trail for the current or specified URL.
+
+```php
+// Current URL
+$breadcrumbs = MenuBuilder::getBreadcrumbs('main-menu');
+
+// Specific URL
+$breadcrumbs = MenuBuilder::getBreadcrumbs('main-menu', '/products/laptops');
+
+// Include home when URL not found
+$breadcrumbs = MenuBuilder::getBreadcrumbs('main-menu', '/404', includeHome: true);
+```
+
+Returns an array of breadcrumb items ordered by depth:
+```php
+[
+    ['id' => 1, 'title' => 'Home', 'url' => '/', 'depth' => 0, ...],
+    ['id' => 2, 'title' => 'Products', 'url' => '/products', 'depth' => 1, ...],
+]
+```
+
+#### `getBreadcrumbsByRoute(string $menuAlias, ?string $routeName = null, bool $includeHome = false): array`
+Get breadcrumb trail by Laravel route name.
+
+```php
+// Current route
+$breadcrumbs = MenuBuilder::getBreadcrumbsByRoute('main-menu');
+
+// Specific route
+$breadcrumbs = MenuBuilder::getBreadcrumbsByRoute('main-menu', 'products.show');
+
+// Include home when route not found
+$breadcrumbs = MenuBuilder::getBreadcrumbsByRoute('main-menu', 'products.show', includeHome: true);
 ```
 
 #### `clearCache(string $menuAlias): void`

@@ -13,7 +13,7 @@ class TestCase extends Orchestra
         parent::setUp();
 
         Factory::guessFactoryNamesUsing(
-            fn (string $modelName) => 'Aslnbxrz\\MenuBuilder\\Database\\Factories\\'.class_basename($modelName).'Factory'
+            fn(string $modelName) => 'Aslnbxrz\\MenuBuilder\\Database\\Factories\\' . class_basename($modelName) . 'Factory'
         );
     }
 
@@ -27,11 +27,18 @@ class TestCase extends Orchestra
     public function getEnvironmentSetUp($app)
     {
         config()->set('database.default', 'testing');
+        config()->set('database.connections.testing', [
+            'driver' => 'sqlite',
+            'database' => ':memory:',
+            'prefix' => '',
+        ]);
 
-        /*
-         foreach (\Illuminate\Support\Facades\File::allFiles(__DIR__ . '/../database/migrations') as $migration) {
-            (include $migration->getRealPath())->up();
-         }
-         */
+        // Load package migrations
+        $migrationPath = __DIR__ . '/../database/migrations';
+        if (is_dir($migrationPath)) {
+            foreach (\Illuminate\Support\Facades\File::allFiles($migrationPath) as $migration) {
+                (include $migration->getRealPath())->up();
+            }
+        }
     }
 }

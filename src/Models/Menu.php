@@ -24,7 +24,12 @@ class Menu extends Model
 {
     protected $guarded = [];
 
+    protected $attributes = [
+        'is_active' => true,
+    ];
+
     protected $casts = [
+        'is_active' => 'boolean',
         'meta' => 'array',
     ];
 

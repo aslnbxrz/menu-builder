@@ -41,13 +41,18 @@ class MenuBuilder
      */
     public function getTree(string $menuAlias, ?User $user = null): array
     {
-        return Cache::remember($this->cacheKey.$menuAlias, now()->addMinutes($this->cacheTtl), function () use ($menuAlias, $user) {
+        // Cache the full tree structure, not the filtered result
+        $tree = Cache::remember($this->cacheKey . $menuAlias, now()->addMinutes($this->cacheTtl), function () use ($menuAlias) {
             $flat = $this->getFlatTree($menuAlias);
 
-            $tree = $this->buildTree($flat);
-
-            return $this->filterVisible($tree, $user);
+            return $this->buildTree($flat);
         });
+
+        // Deep copy tree to prevent modification of cached objects by reference during filtering
+        // This is important because objects in PHP are passed by reference
+        $treeCopy = unserialize(serialize($tree));
+
+        return $this->filterVisible($treeCopy, $user);
     }
 
     /**
@@ -57,7 +62,7 @@ class MenuBuilder
     {
         $menu = $this->getMenu($menuAlias);
 
-        if (! $menu) {
+        if (!$menu) {
             return [];
         }
 
@@ -87,7 +92,7 @@ class MenuBuilder
     {
         foreach ($items as $item) {
             if ($item->parent_id === $parentId) {
-                $currentPath = $path ? $path.'.'.$item->id : (string) $item->id;
+                $currentPath = $path ? $path . '.' . $item->id : (string) $item->id;
                 $url = trim(implode('/', array_filter([$item->link, $item->menuable_value])), '/');
 
                 $itemData = (object) [
@@ -119,12 +124,167 @@ class MenuBuilder
     public static function clearCache(string $menuAlias): void
     {
         $key = config('menu-builder.cache.key', 'menu:tree:');
-        Cache::forget($key.$menuAlias);
+        Cache::forget($key . $menuAlias);
+    }
+
+    /**
+     * Get breadcrumb trail for current URL
+     *
+     * @param  string  $menuAlias  Menu alias
+     * @param  string|null  $currentUrl  Current URL (default: current request URL)
+     * @param  bool  $includeHome  Include home/root item even if not in path
+     * @return array<int, array<string, mixed>>
+     */
+    public function getBreadcrumbs(string $menuAlias, ?string $currentUrl = null, bool $includeHome = false): array
+    {
+        $currentUrl = $currentUrl ?? request()->url();
+        $flatTree = $this->getFlatTree($menuAlias);
+
+        if (empty($flatTree)) {
+            return [];
+        }
+
+        // Normalize URL for comparison
+        $currentUrl = rtrim($currentUrl, '/');
+
+        // Find current item by URL
+        $currentItem = $this->findItemByUrl($flatTree, $currentUrl);
+
+        if (!$currentItem) {
+            return $includeHome ? [$this->formatBreadcrumbItem($flatTree[0])] : [];
+        }
+
+        // Get path IDs from the path string
+        $pathIds = array_map('intval', explode('.', $currentItem->path));
+
+        // Build breadcrumb trail
+        $breadcrumbs = [];
+        foreach ($flatTree as $item) {
+            if (in_array($item->id, $pathIds)) {
+                $breadcrumbs[] = $this->formatBreadcrumbItem($item);
+            }
+        }
+
+        // Sort by depth to ensure proper order
+        usort($breadcrumbs, fn($a, $b) => $a['depth'] <=> $b['depth']);
+
+        return array_values($breadcrumbs);
+    }
+
+    /**
+     * Get breadcrumb trail by route name
+     *
+     * @param  string  $menuAlias  Menu alias
+     * @param  string|null  $routeName  Route name (default: current route name)
+     * @param  bool  $includeHome  Include home/root item even if not in path
+     * @return array<int, array<string, mixed>>
+     */
+    public function getBreadcrumbsByRoute(string $menuAlias, ?string $routeName = null, bool $includeHome = false): array
+    {
+        $routeName = $routeName ?? request()->route()?->getName();
+
+        if (!$routeName) {
+            return [];
+        }
+
+        $flatTree = $this->getFlatTree($menuAlias);
+
+        if (empty($flatTree)) {
+            return [];
+        }
+
+        // Find item by route name
+        $currentItem = null;
+        foreach ($flatTree as $item) {
+            if ($item->type === MenuItemType::Route->value) {
+                $meta = (array) ($item->meta ?? []);
+                if (($meta['route'] ?? '') === $routeName) {
+                    $currentItem = $item;
+                    break;
+                }
+            }
+        }
+
+        if (!$currentItem) {
+            return $includeHome ? [$this->formatBreadcrumbItem($flatTree[0])] : [];
+        }
+
+        // Get path IDs from the path string
+        $pathIds = array_map('intval', explode('.', $currentItem->path));
+
+        // Build breadcrumb trail
+        $breadcrumbs = [];
+        foreach ($flatTree as $item) {
+            if (in_array($item->id, $pathIds)) {
+                $breadcrumbs[] = $this->formatBreadcrumbItem($item);
+            }
+        }
+
+        // Sort by depth
+        usort($breadcrumbs, fn($a, $b) => $a['depth'] <=> $b['depth']);
+
+        return array_values($breadcrumbs);
     }
 
     /* -------------------------------------------------
     | Internal helpers
     ------------------------------------------------- */
+
+    /**
+     * Find menu item by URL
+     */
+    protected function findItemByUrl(array $flatTree, string $url): ?object
+    {
+        $url = rtrim($url, '/');
+
+        foreach ($flatTree as $item) {
+            $itemUrl = rtrim($item->url ?? '', '/');
+
+            // Exact match
+            if ($itemUrl === $url) {
+                return $item;
+            }
+
+            // Try without leading slash
+            if (ltrim($itemUrl, '/') === ltrim($url, '/')) {
+                return $item;
+            }
+
+            // For route type, check if route matches
+            if ($item->type === MenuItemType::Route->value) {
+                $meta = (array) ($item->meta ?? []);
+                if (isset($meta['route']) && Route::has($meta['route'])) {
+                    try {
+                        $routeUrl = rtrim(route($meta['route']), '/');
+                        if ($routeUrl === $url) {
+                            return $item;
+                        }
+                    } catch (\Exception $e) {
+                        // Skip invalid routes
+                        continue;
+                    }
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Format breadcrumb item for output
+     */
+    protected function formatBreadcrumbItem(object $item): array
+    {
+        return [
+            'id' => $item->id,
+            'title' => $item->title,
+            'url' => $item->url,
+            'link' => $item->link,
+            'type' => $item->type,
+            'depth' => $item->depth,
+            'meta' => $item->meta,
+        ];
+    }
 
     protected function buildTree(array $items): array
     {
@@ -150,7 +310,7 @@ class MenuBuilder
     protected function filterVisible(array $items, ?User $user): array
     {
         return array_values(array_filter(array_map(
-            fn ($item) => $this->filterItem($item, $user),
+            fn($item) => $this->filterItem($item, $user),
             $items
         )));
     }
@@ -168,7 +328,7 @@ class MenuBuilder
 
     protected function isVisible(object $item, ?User $user): bool
     {
-        if (! isset($item->type) || empty($item->type)) {
+        if (!isset($item->type) || empty($item->type)) {
             return false;
         }
 
@@ -188,8 +348,8 @@ class MenuBuilder
             MenuItemType::Permission => $user?->can($meta['permission'] ?? '') ?? false,
 
             MenuItemType::Feature => app()->bound('features')
-                ? app('features')->active($meta['feature'] ?? '')
-                : true,
+            ? app('features')->active($meta['feature'] ?? '')
+            : true,
         };
     }
 }
